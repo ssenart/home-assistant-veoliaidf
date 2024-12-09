@@ -2,6 +2,7 @@
 --extra-index-url https://pypi.org/simple
 flake8
 pytest
+pytest-asyncio
 pyveoliaidf
 pandas
 homeassistant

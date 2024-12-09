@@ -43,15 +43,13 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_USERNAME): cv.string,
     vol.Required(CONF_PASSWORD): cv.string,
     vol.Required(CONF_WEBDRIVER): cv.string,
-    vol.Optional(
-                    CONF_WAITTIME, default=DEFAULT_WAITTIME
-                ): int,
+    vol.Optional(CONF_WAITTIME, default=DEFAULT_WAITTIME): int,
     vol.Required(CONF_TMPDIR): cv.string,
-    vol.Optional(
-                    CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL
-                ): cv.time_period
+    vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): cv.time_period
 })
 
+
+# --------------------------------------------------------------------------------------------
 async def async_setup_platform(hass, config, add_entities, discovery_info=None):
     """Configure the platform and add the Linky sensor."""
 
@@ -59,11 +57,22 @@ async def async_setup_platform(hass, config, add_entities, discovery_info=None):
 
     try:
         username = config[CONF_USERNAME]
+        _LOGGER.debug(f"username={username}")
+
         password = config[CONF_PASSWORD]
+        _LOGGER.debug("password=***********")
+
         webdriver = config[CONF_WEBDRIVER]
+        _LOGGER.debug(f"webdriver={webdriver}")
+
         wait_time = config[CONF_WAITTIME]
+        _LOGGER.debug(f"wait_time={wait_time}")
+
         tmpdir = config[CONF_TMPDIR]
+        _LOGGER.debug(f"tmpdir={tmpdir}")
+
         scan_interval = config[CONF_SCAN_INTERVAL]
+        _LOGGER.debug(f"scan_interval={scan_interval}")
 
         account = VeoliaIDFAccount(hass, username, password, webdriver, wait_time, tmpdir, scan_interval)
         add_entities(account.sensors, True)
@@ -77,10 +86,14 @@ async def async_setup_platform(hass, config, add_entities, discovery_info=None):
         _LOGGER.debug("VeoliaIDF platform initialization has completed successfully")
     except BaseException:
         _LOGGER.error("VeoliaIDF platform initialization has failed with exception : %s", traceback.format_exc())
+        raise
 
+
+# --------------------------------------------------------------------------------------------
 class VeoliaIDFAccount:
     """Representation of a VeoliaIDF account."""
 
+    # ----------------------------------
     def __init__(self, hass, username, password, webdriver, wait_time, tmpdir, scan_interval):
         """Initialise the VeoliaIDF account."""
         self._username = username
@@ -100,8 +113,8 @@ class VeoliaIDFAccount:
             VeoliaIDFSensor(HA_YESTERDAY_LITER, PropertyNameEnum.DAILY_LITER.value, UnitOfVolume.LITERS, LAST_INDEX, self))
         self.sensors.append(
             VeoliaIDFSensor(HA_TOTAL_LITER, PropertyNameEnum.TOTAL_LITER.value, UnitOfVolume.LITERS, LAST_INDEX, self))
-        
 
+    # ----------------------------------
     async def async_update_veolia_data(self, event_time):
         """Fetch new state data for the sensor."""
 
@@ -114,13 +127,18 @@ class VeoliaIDFAccount:
             await loop.run_in_executor(None, client.update)
 
             self._data = client.data()
-            _LOGGER.debug(json.dumps(self._data, indent=2))
-            for sensor in self.sensors:
-                sensor.async_schedule_update_ha_state(True)
-                _LOGGER.debug("HA notified that new data is available")
+            _LOGGER.debug(f"data={json.dumps(self._data, indent=2)}")
+
             _LOGGER.debug("New data have been retrieved successfully from PyVeoliaIDF library")
         except BaseException:
             _LOGGER.error("Failed to query PyVeoliaIDF library with exception : %s", traceback.format_exc())
+            if event_time is None:
+                raise
+
+        if event_time is not None:
+            for sensor in self.sensors:
+                sensor.async_schedule_update_ha_state(True)
+            _LOGGER.debug("HA notified that new data is available")
 
     @property
     def username(self):
@@ -151,7 +169,7 @@ class VeoliaIDFSensor(Entity):
         self._name = name
         self._identifier = identifier
         self._unit = unit
-        self._index = index        
+        self._index = index
         self.__account = account
         self._username = account.username
         self.__timestamp = None
@@ -208,4 +226,3 @@ class VeoliaIDFSensor(Entity):
                 _LOGGER.debug("No data available yet for update")
         except BaseException:
             _LOGGER.error("Failed to update HA data with exception : %s", traceback.format_exc())
-
