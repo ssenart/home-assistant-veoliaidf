@@ -1,0 +1,15 @@
+{
+  "domain": "veoliaidf",
+  "name": "VeoliaIDF",
+  "version": "0.3.4",  
+  "issue_tracker": "https://github.com/ssenart/PyVeoliaIDF/issues",
+  "requirements": [
+    "pyveoliaidf==0.3.4"
+  ],
+  "dependencies": [],
+  "codeowners": [
+    "ssenart"
+  ]
+}
+
+
