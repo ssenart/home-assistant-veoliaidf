@@ -19,8 +19,9 @@ sensor:
     username: ***
     password: ***
     webdriver: /config/drivers/geckodriver
+    firefox_binary_location: /usr/bin/firefox
     tmpdir: /tmp
-    scan_interval: 01:00:00
+    scan_interval: 08:00:00
 ```
 
 5. Restart your HA application. In HA development panel, you should see the new Veolia entities :

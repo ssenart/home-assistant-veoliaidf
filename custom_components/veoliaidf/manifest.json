@@ -9,7 +9,7 @@
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/ssenart/home-assistant-veoliaidf/issues",  
   "requirements": [
-    "pyveoliaidf>=0.3.4"
+    "pyveoliaidf>=0.4.0"
   ],
-  "version": "0.1.0"
+  "version": "0.4.0"
 }

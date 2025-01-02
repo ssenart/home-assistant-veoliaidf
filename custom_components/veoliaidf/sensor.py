@@ -18,6 +18,7 @@ from homeassistant.helpers.event import async_call_later, async_track_time_inter
 _LOGGER = logging.getLogger(__name__)
 
 CONF_WEBDRIVER = "webdriver"
+CONF_FIREFOX_BINARY_LOCATION = "firefox_binary_location"
 CONF_WAITTIME = "wait_time"
 CONF_TMPDIR = "tmpdir"
 DEFAULT_SCAN_INTERVAL = timedelta(hours=4)
@@ -43,6 +44,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_USERNAME): cv.string,
     vol.Required(CONF_PASSWORD): cv.string,
     vol.Required(CONF_WEBDRIVER): cv.string,
+    vol.Required(CONF_FIREFOX_BINARY_LOCATION): cv.string,
     vol.Optional(CONF_WAITTIME, default=DEFAULT_WAITTIME): int,
     vol.Required(CONF_TMPDIR): cv.string,
     vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): cv.time_period
@@ -65,6 +67,9 @@ async def async_setup_platform(hass, config, add_entities, discovery_info=None):
         webdriver = config[CONF_WEBDRIVER]
         _LOGGER.debug(f"webdriver={webdriver}")
 
+        firefox_binary_location = config.get(CONF_FIREFOX_BINARY_LOCATION)
+        _LOGGER.debug(f"firefox_binary_location={firefox_binary_location}")
+
         wait_time = config[CONF_WAITTIME]
         _LOGGER.debug(f"wait_time={wait_time}")
 
@@ -74,7 +79,7 @@ async def async_setup_platform(hass, config, add_entities, discovery_info=None):
         scan_interval = config[CONF_SCAN_INTERVAL]
         _LOGGER.debug(f"scan_interval={scan_interval}")
 
-        account = VeoliaIDFAccount(hass, username, password, webdriver, wait_time, tmpdir, scan_interval)
+        account = VeoliaIDFAccount(hass, username, password, webdriver, firefox_binary_location, wait_time, tmpdir, scan_interval)
         add_entities(account.sensors, True)
 
         if hass is not None:
@@ -94,11 +99,12 @@ class VeoliaIDFAccount:
     """Representation of a VeoliaIDF account."""
 
     # ----------------------------------
-    def __init__(self, hass, username, password, webdriver, wait_time, tmpdir, scan_interval):
+    def __init__(self, hass, username, password, webdriver, firefox_binary_location, wait_time, tmpdir, scan_interval):
         """Initialise the VeoliaIDF account."""
         self._username = username
         self.__password = password
         self._webdriver = webdriver
+        self._firefox_binary_location = firefox_binary_location
         self._wait_time = wait_time
         self._tmpdir = tmpdir
         self._scan_interval = scan_interval
@@ -121,7 +127,7 @@ class VeoliaIDFAccount:
         _LOGGER.debug("Querying PyVeoliaIDF library for new data...")
 
         try:
-            client = Client(self._username, self.__password, 10, self._webdriver, self._wait_time, self._tmpdir)
+            client = Client(self._username, self.__password, 10, self._webdriver, self._firefox_binary_location, self._wait_time, self._tmpdir)
 
             loop = asyncio.get_event_loop()
             await loop.run_in_executor(None, client.update)
