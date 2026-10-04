@@ -1,8 +1,0 @@
---index-url https://test.pypi.org/simple
---extra-index-url https://pypi.org/simple
-flake8
-pytest
-pytest-asyncio
-pyveoliaidf
-pandas
-homeassistant

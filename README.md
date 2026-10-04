@@ -7,7 +7,7 @@ PyVeoliaIDF library relies on Selenium and geckodriver application (see https://
 
 1. Copy the veoliaidf directory in HA config/custom_components directory.
 
-2. Copy your Selenium geckodriver binary in HA config/drivers directory. Ensure it has the execution permission from the runtime environment HA is running on. Geckodriver releases are available here : https://github.com/mozilla/geckodriver/releases.
+2. Optional: copy a specific Selenium geckodriver binary in HA config/drivers directory, and set its path in the `webdriver` option below. Ensure it has the execution permission from the runtime environment HA is running on. Geckodriver releases are available here : https://github.com/mozilla/geckodriver/releases. If `webdriver` is omitted, Selenium Manager finds or downloads the geckodriver matching your system (this needs internet access on the first run).
 
 3. Install a compatible version Firefox on HA host. Ensure this version is in the PATH and HA can run it.
 
@@ -17,18 +17,42 @@ PyVeoliaIDF library relies on Selenium and geckodriver application (see https://
 sensor:
 - platform: veoliaidf
     username: ***
-    password: ***
+    password: !secret veolia_password
     webdriver: /config/drivers/geckodriver
     firefox_binary_location: /usr/bin/firefox
     tmpdir: /tmp
     scan_interval: 08:00:00
 ```
 
+Keep the password in HA `secrets.yaml`, as `veolia_password: ***`, so it stays out of your configuration.
+
 5. Restart your HA application. In HA development panel, you should see the new Veolia entities :
 - sensor.veolia_total_liter
 - sensor.veolia_yesterday_liter
 - sensor.veolia_period_start_time
 - sensor.veolia_period_end_time
+
+6. Optional: to follow your water consumption in the Energy dashboard, go to Settings → Dashboards → Energy, add a water source and select `sensor.veolia_total_liter`. Home Assistant records long-term statistics from the moment it starts reading this sensor; past readings are not imported.
+
+# Development
+
+The development environment is managed with [uv](https://docs.astral.sh/uv/), from `pyproject.toml` and `uv.lock`. It needs Python 3.14.2 or newer, the version Home Assistant requires.
+
+```bash
+cd /path/to/home-assistant-veoliaidf
+uv sync                                  # create .venv and install the locked dependencies
+uv run flake8 custom_components tests    # lint
+```
+
+The development environment pins PyVeoliaIDF `0.4.6a1`, the pre-release on PyPI (see `pyproject.toml`). Once 0.4.6 is final, change the pin to `pyveoliaidf>=0.4.6` and run `uv lock`.
+
+`uv run pytest` runs the offline tests: no network and no browser.
+
+The live test `tests/test_veoliaidf_sensor.py::test_live` is marked `live`, because it logs into the Veolia web site with your account. Put `VEOLIAIDF_USERNAME` and `VEOLIAIDF_PASSWORD` in a `.env` file (do not commit it), then run:
+
+```bash
+uv run --env-file .env pytest -m live
+```
 
 # Note about using geckodriver in a Docker container
 
@@ -47,7 +71,7 @@ A first check to ensure binary compatibility is to login into the Docker contain
 You should see something like :
 
 ```bash
-geckodriver 0.27.0 (7b8c4f32cdde 2020-07-28 18:16 +0000)
+geckodriver <version> (<commit> <build date>)
 
 The source code of this program is available from
 testing/geckodriver in https://hg.mozilla.org/mozilla-central.
@@ -101,35 +125,3 @@ You can install the corresponding firefox package with the command :
 ```bash
 apk add firefox
 ```
-
-However, HassIO does not permit to add easily binary packages (apk) to their system.
-
-As a workaround, I invite you to patch the component code as following :
-
-```diff
-diff --git a/gazpar/sensor.py b/gazpar/sensor.py
-index 4154c175e205f4cec02e65e002287507387d4e90..cb679d3e522acd72586e6cb63825bddb9d64a5c7 100644
---- a/gazpar/sensor.py
-+++ b/gazpar/sensor.py
-@@ -15,6 +15,7 @@ from homeassistant.const import (
- import homeassistant.helpers.config_validation as cv
- from homeassistant.helpers.entity import Entity
- from homeassistant.helpers.event import track_time_interval, call_later
-+import os
- 
- _LOGGER = logging.getLogger(__name__)
- 
-@@ -65,6 +66,8 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
- 
-     _LOGGER.debug("Initializing Gazpar platform...")
- 
-+    os.system("apk add firefox")
-+
-     try:
-         username = config[CONF_USERNAME]
-         password = config[CONF_PASSWORD]
-``` 
-
-I know it is dirty and I don't have other cleaner solution yet.
-
-Let me know if you have other ideas.
