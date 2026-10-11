@@ -86,3 +86,26 @@ The live test `tests/test_veoliaidf_sensor.py::test_live` is marked `live`, beca
 ```bash
 uv run --env-file .env pytest -m live
 ```
+
+## Continuous integration
+`.github/workflows/ci.yaml` runs on every push to `main`, `develop`, `release/*` and `feature/*`, on pull requests, and by hand. It lints with flake8 (the settings are in `.flake8`) and runs the offline tests on Python 3.14, the version Home Assistant requires. The live test is not run in CI: the [pyveoliaidf library](https://github.com/ssenart/pyveoliaidf) already tests the site live. `hassfest-action.yml` validates the integration with Home Assistant's own checks.
+
+`hacs-action.yml` runs the HACS validation of the repository (a pinned `hacs/action`, ignoring the brands, requirements and archived checks). HACS requires a description and topics on the GitHub repository: they are set.
+
+## Creating a release
+The integration is installed from its GitHub release (HACS), so a release publishes nothing outside GitHub. It is created by the **Create Release** workflow (`.github/workflows/create-release.yaml`), run by hand from GitHub: Actions, Create Release, Run workflow.
+
+| Branch | Versions that can be released from it |
+|---|---|
+| `develop` | Alpha: `X.Y.ZaN` |
+| `release/X.Y.Z` | Beta `X.Y.ZbN` or release candidate `X.Y.ZrcN`, with the same `X.Y.Z` as the branch |
+| `main` | Final: `X.Y.Z` |
+
+1. Put the changes under `## [Unreleased]` in `CHANGELOG.md`: the workflow refuses an empty section.
+2. If the integration needs a new version of the library, change the pin in `custom_components/veoliaidf/manifest.json` and in `pyproject.toml`, run `uv lock`, and merge it first.
+3. Check that CI is green on the last commit. The workflow checks it too, and waits for a running CI for up to 30 minutes.
+4. Run the workflow with the version (PEP 440, for instance `0.5.0a1`). Keep **draft** ticked, and try it first with **Dry run**: it validates, bumps and reports, and pushes and releases nothing.
+5. The workflow bumps the version in `manifest.json`, `pyproject.toml` and `uv.lock`, turns `[Unreleased]` into the version with its date and compare links, commits `Bump version to X.Y.Z`, tags it, and creates the GitHub release (a draft, with the changelog section as notes, marked as a pre-release for an alpha, a beta or a candidate). Publish the draft after checking it.
+6. After a final release from `main`, merge `main` back into `develop`.
+
+The version of the component (`manifest.json`) is its own: it does not have to follow the library's.

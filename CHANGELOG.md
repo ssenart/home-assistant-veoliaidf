@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Offline tests run by default. The live test is marked `live` and runs with `pytest -m live`.
 - The hassfest workflow uses `actions/checkout@v4` and a pinned hassfest action.
 
+### Added
+- GitHub workflows aligned with the other Home Assistant integrations of the suite: a CI (flake8, offline tests on Python 3.14) and a Create Release workflow that bumps `manifest.json`, `pyproject.toml` and `uv.lock`, finalizes the changelog, tags, and creates the GitHub release. The HACS check is enabled, and the GitHub repository has topics, which HACS requires.
+
 ### Fixed
 - The timestamp and type attributes are shown again. They were exposed through `device_state_attributes`, which Home Assistant no longer reads; they are now exposed through `extra_state_attributes`.
 - The username is no longer exposed as an entity attribute.
