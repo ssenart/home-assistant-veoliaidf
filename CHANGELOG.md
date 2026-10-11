@@ -7,8 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
-- Upgrade to PyVeoliaIDF version 0.4.6. PyVeoliaIDF now requires Python 3.10 or newer and Selenium 4.50 or newer.
-- The `webdriver` option is optional. When it is omitted, Selenium Manager finds or downloads the geckodriver matching the host system.
+- **Breaking for the installation:** the component uses the asynchronous PyVeoliaIDF 0.5.0, which calls the Veolia backend over HTTPS. Firefox, geckodriver and Selenium are no longer needed, and the update no longer runs in a thread: it awaits the library, with a client that is closed after each update.
+- The options `webdriver`, `firefox_binary_location`, `wait_time` and `tmpdir` are no longer used. An existing configuration that has them keeps working: Home Assistant logs a warning and ignores them.
+- The component requires `pyveoliaidf==0.5.0a1`. The development environment installs the library from the sibling checkout until it is on PyPI.
 - The development environment is managed with uv (`pyproject.toml`, `uv.lock`) and needs Python 3.14.2 or newer. The README describes the setup.
 - The total liter sensor is a water meter: device class `water`, state class `total_increasing`, unit liters. It can be selected as a water source in the Energy dashboard, and Home Assistant records its long-term statistics.
 - Offline tests run by default. The live test is marked `live` and runs with `pytest -m live`.
@@ -23,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The password is documented as a `secrets.yaml` entry (`!secret`).
 
 ### Removed
+- The bundled `drivers/` folder (geckodriver binaries) and the geckodriver and Firefox installation notes of the README.
 - `requirements.txt`, replaced by `pyproject.toml`.
 - The unused `pandas` development dependency.
 

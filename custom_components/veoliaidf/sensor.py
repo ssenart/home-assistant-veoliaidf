@@ -2,7 +2,6 @@
 from datetime import timedelta, datetime
 import logging
 import traceback
-import asyncio
 
 from pyveoliaidf.client import Client
 from pyveoliaidf.enum import PropertyNameEnum
@@ -17,12 +16,9 @@ import voluptuous as vol
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_WEBDRIVER = "webdriver"
-CONF_FIREFOX_BINARY_LOCATION = "firefox_binary_location"
-CONF_WAITTIME = "wait_time"
-CONF_TMPDIR = "tmpdir"
+# The options of the browser-based versions: the library no longer drives a browser, so they are accepted and ignored.
+REMOVED_OPTIONS = ("webdriver", "firefox_binary_location", "wait_time", "tmpdir")
 DEFAULT_SCAN_INTERVAL = timedelta(hours=4)
-DEFAULT_WAITTIME = 30
 ICON_WATER = "mdi:water"
 
 LAST_N_DAYS = 10
@@ -43,15 +39,14 @@ HA_TOTAL_LITER = "Veolia total liter"
 LAST_INDEX = -1
 BEFORE_LAST_INDEX = -2
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_USERNAME): cv.string,
-    vol.Required(CONF_PASSWORD): cv.string,
-    vol.Optional(CONF_WEBDRIVER): cv.string,
-    vol.Required(CONF_FIREFOX_BINARY_LOCATION): cv.string,
-    vol.Optional(CONF_WAITTIME, default=DEFAULT_WAITTIME): int,
-    vol.Required(CONF_TMPDIR): cv.string,
-    vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): cv.time_period
-})
+PLATFORM_SCHEMA = vol.All(
+    *(cv.removed(option, raise_if_present=False) for option in REMOVED_OPTIONS),
+    PLATFORM_SCHEMA.extend({
+        vol.Required(CONF_USERNAME): cv.string,
+        vol.Required(CONF_PASSWORD): cv.string,
+        vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): cv.time_period
+    })
+)
 
 
 # --------------------------------------------------------------------------------------------
@@ -67,23 +62,10 @@ async def async_setup_platform(hass, config, add_entities, discovery_info=None):
         password = config[CONF_PASSWORD]
         _LOGGER.debug("password=***********")
 
-        # None lets PyVeoliaIDF (through Selenium Manager) find or download geckodriver
-        webdriver = config.get(CONF_WEBDRIVER)
-        _LOGGER.debug("webdriver=%s", webdriver)
-
-        firefox_binary_location = config.get(CONF_FIREFOX_BINARY_LOCATION)
-        _LOGGER.debug("firefox_binary_location=%s", firefox_binary_location)
-
-        wait_time = config[CONF_WAITTIME]
-        _LOGGER.debug("wait_time=%s", wait_time)
-
-        tmpdir = config[CONF_TMPDIR]
-        _LOGGER.debug("tmpdir=%s", tmpdir)
-
         scan_interval = config[CONF_SCAN_INTERVAL]
         _LOGGER.debug("scan_interval=%s", scan_interval)
 
-        account = VeoliaIDFAccount(hass, username, password, webdriver, firefox_binary_location, wait_time, tmpdir, scan_interval)
+        account = VeoliaIDFAccount(hass, username, password, scan_interval)
         add_entities(account.sensors, True)
 
         if hass is not None:
@@ -103,14 +85,10 @@ class VeoliaIDFAccount:
     """Representation of a VeoliaIDF account."""
 
     # ----------------------------------
-    def __init__(self, hass, username, password, webdriver, firefox_binary_location, wait_time, tmpdir, scan_interval):
+    def __init__(self, hass, username, password, scan_interval):
         """Initialise the VeoliaIDF account."""
         self._username = username
         self.__password = password
-        self._webdriver = webdriver
-        self._firefox_binary_location = firefox_binary_location
-        self._wait_time = wait_time
-        self._tmpdir = tmpdir
         self._scan_interval = scan_interval
         self._data = None
         self.sensors = []
@@ -131,12 +109,11 @@ class VeoliaIDFAccount:
         _LOGGER.debug("Querying PyVeoliaIDF library for new data...")
 
         try:
-            client = Client(self._username, self.__password, LAST_N_DAYS, self._webdriver, self._firefox_binary_location, self._wait_time, self._tmpdir)
-
-            loop = asyncio.get_running_loop()
-            await loop.run_in_executor(None, client.update)
-
-            self._data = client.data()
+            # The client makes its own HTTP session: it must keep the login cookies and trust the intermediate
+            # certificate of the Veolia site, which Home Assistant's shared session does not.
+            async with Client(self._username, self.__password, LAST_N_DAYS) as client:
+                await client.update()
+                self._data = client.data()
             _LOGGER.debug("data=%s", self._data)
 
             _LOGGER.debug("New data have been retrieved successfully from PyVeoliaIDF library")
@@ -154,16 +131,6 @@ class VeoliaIDFAccount:
     def username(self):
         """Return the username."""
         return self._username
-
-    @property
-    def webdriver(self):
-        """Return the webdriver."""
-        return self._webdriver
-
-    @property
-    def tmpdir(self):
-        """Return the tmpdir."""
-        return self._tmpdir
 
     @property
     def scan_interval(self):
@@ -216,7 +183,7 @@ class VeoliaIDFReadingMixin:
             if self._account.data is not None:
                 data = self._account.data[self._index]
                 if numeric:
-                    # data is a measure in liters (the library returns it as text)
+                    # data is a measure in liters (an integer, but kept tolerant of text)
                     self._measure = int(data[self._identifier])
                 else:
                     # data is a date in VEOLIA_DATETIME_FORMAT

@@ -1,5 +1,5 @@
 from custom_components.veoliaidf.sensor import async_setup_platform
-from custom_components.veoliaidf.sensor import CONF_USERNAME, CONF_PASSWORD, CONF_WAITTIME, CONF_TMPDIR, CONF_SCAN_INTERVAL, CONF_WEBDRIVER, CONF_FIREFOX_BINARY_LOCATION, HA_TIMESTAMP
+from custom_components.veoliaidf.sensor import CONF_USERNAME, CONF_PASSWORD, CONF_SCAN_INTERVAL, HA_TIMESTAMP
 import os
 import logging
 import json
@@ -19,10 +19,6 @@ class TestVeoliaIDFSensor:
         config = {
             CONF_USERNAME: os.environ["VEOLIAIDF_USERNAME"],
             CONF_PASSWORD: os.environ["VEOLIAIDF_PASSWORD"],
-            CONF_WEBDRIVER: None,  # found or downloaded by Selenium Manager
-            CONF_FIREFOX_BINARY_LOCATION: "C:/Program Files/Mozilla Firefox/firefox.exe" if os.name == "nt" else "/usr/bin/firefox",
-            CONF_WAITTIME: 30,
-            CONF_TMPDIR: "./tmp",
             CONF_SCAN_INTERVAL: 600,
         }
 

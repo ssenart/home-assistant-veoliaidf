@@ -7,14 +7,13 @@ from homeassistant.const import UnitOfVolume
 
 from custom_components.veoliaidf import sensor
 from custom_components.veoliaidf.sensor import (
-    CONF_FIREFOX_BINARY_LOCATION,
     CONF_PASSWORD,
-    CONF_TMPDIR,
     CONF_USERNAME,
-    CONF_WEBDRIVER,
     HA_TIMESTAMP,
     HA_TYPE,
     HA_TOTAL_LITER,
+    LAST_N_DAYS,
+    REMOVED_OPTIONS,
 )
 
 USERNAME = "user@example.com"
@@ -23,35 +22,56 @@ BASE_CONFIG = {
     "platform": "veoliaidf",
     CONF_USERNAME: USERNAME,
     CONF_PASSWORD: "secret",
-    CONF_FIREFOX_BINARY_LOCATION: "/usr/bin/firefox",
-    CONF_TMPDIR: "/tmp",
+}
+
+# The options of the browser-based versions, as an existing configuration still has them.
+LEGACY_OPTIONS = {
+    "webdriver": "/config/drivers/geckodriver",
+    "firefox_binary_location": "/usr/bin/firefox",
+    "wait_time": 30,
+    "tmpdir": "/tmp",
 }
 
 RECORDS = [
-    {"time": "2026-10-02 21:00:00", "total_liter": "1000", "daily_liter": "10", "type": "Mesuré", "timestamp": "2026-10-04T10:00:00"},
-    {"time": "2026-10-03 21:00:00", "total_liter": "1010", "daily_liter": "10", "type": "Mesuré", "timestamp": "2026-10-04T10:00:00"},
+    {"time": "2026-10-02 21:00:00", "total_liter": 1000, "daily_liter": 10, "type": "Mesuré", "timestamp": "2026-10-04T10:00:00"},
+    {"time": "2026-10-03 21:00:00", "total_liter": 1010, "daily_liter": 10, "type": "Mesuré", "timestamp": "2026-10-04T10:00:00"},
 ]
 
 
 class FakeClient:
-    """Stands in for pyveoliaidf.client.Client and remembers the arguments it was built with."""
+    """Stands in for pyveoliaidf.Client: an async context manager that remembers how it was built and used."""
 
     last_args = None
+    last_kwargs = None
+    updates = 0
+    closed = 0
 
     def __init__(self, *args, **kwargs):
         FakeClient.last_args = args
+        FakeClient.last_kwargs = kwargs
 
-    def update(self):
-        pass
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        FakeClient.closed += 1
+
+    async def update(self):
+        FakeClient.updates += 1
 
     def data(self):
         return list(RECORDS)
 
 
-def _setup(config):
+class FailingClient(FakeClient):
+    async def update(self):
+        raise RuntimeError("the site is down")
+
+
+def _setup(config, client_class=FakeClient):
     """Run the platform setup with the fake client and return the entities it added."""
     entities = []
-    with mock.patch.object(sensor, "Client", FakeClient):
+    with mock.patch.object(sensor, "Client", client_class):
         asyncio.run(sensor.async_setup_platform(None, config, lambda new_entities, update_before_add: entities.extend(new_entities)))
     return entities
 
@@ -60,18 +80,44 @@ def _validated_config(**overrides):
     return sensor.PLATFORM_SCHEMA({**BASE_CONFIG, **overrides})
 
 
-def test_webdriver_is_optional_and_passed_as_none():
+def test_the_client_is_built_with_the_credentials_and_the_window_only():
     entities = _setup(_validated_config())
 
     assert len(entities) == 4
-    # Client(username, password, last_n_days, webdriver, ...): no webdriver means Selenium Manager.
-    assert FakeClient.last_args[3] is None
+    # No browser option, and no session: the library makes its own, which trusts the Veolia certificate chain.
+    assert FakeClient.last_args == (USERNAME, "secret", LAST_N_DAYS)
+    assert FakeClient.last_kwargs == {}
 
 
-def test_explicit_webdriver_is_passed_through():
-    _setup(_validated_config(**{CONF_WEBDRIVER: "/config/drivers/geckodriver"}))
+def test_the_client_is_used_as_a_context_manager_so_its_session_is_closed():
+    closed = FakeClient.closed
 
-    assert FakeClient.last_args[3] == "/config/drivers/geckodriver"
+    _setup(_validated_config())
+
+    assert FakeClient.closed == closed + 1
+
+
+def test_a_failed_first_update_is_raised():
+    try:
+        _setup(_validated_config(), FailingClient)
+    except RuntimeError as error:
+        assert "the site is down" in str(error)
+    else:
+        raise AssertionError("the failure was swallowed")
+
+
+def test_the_options_of_the_browser_versions_are_accepted_and_dropped():
+    config = _validated_config(**LEGACY_OPTIONS)
+
+    for option in REMOVED_OPTIONS:
+        assert option not in config
+    assert len(_setup(config)) == 4
+
+
+def test_the_configuration_needs_no_browser_option():
+    config = _validated_config()
+
+    assert all(option not in config for option in REMOVED_OPTIONS)
 
 
 def test_sensors_expose_timestamp_and_type_without_username():
