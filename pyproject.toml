@@ -11,15 +11,12 @@ dependencies = []
 dev = [
     "flake8",
     "homeassistant",
-    # The asynchronous library, which needs no browser. It is taken from the sibling checkout (see tool.uv.sources)
-    # until 0.5.0 is on PyPI: then pin it there and remove the source.
-    "pyveoliaidf",
+    # The asynchronous library, which needs no browser. A pre-release from PyPI, pinned exactly like the requirement
+    # of custom_components/veoliaidf/manifest.json. Move both to >=0.5.0 once 0.5.0 is final.
+    "pyveoliaidf==0.5.0a1",
     "pytest",
     "pytest-asyncio",
 ]
-
-[tool.uv.sources]
-pyveoliaidf = { path = "../pyveoliaidf", editable = true }
 
 [tool.uv]
 # This is a Home Assistant custom component, not a package to publish.

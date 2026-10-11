@@ -77,7 +77,7 @@ uv sync                                  # create .venv and install the locked d
 uv run flake8 custom_components tests    # lint
 ```
 
-The development environment installs pyveoliaidf from the sibling checkout `../pyveoliaidf` (see `tool.uv.sources` in `pyproject.toml`), because the asynchronous version is not on PyPI yet. Once it is released, pin it there (for instance `pyveoliaidf>=0.5.0`), remove the source and run `uv lock`. `custom_components/veoliaidf/manifest.json` already requires `pyveoliaidf==0.5.0a1`: set it to the version that is actually published.
+The development environment installs the pre-release `pyveoliaidf==0.5.0a1` from PyPI (see `pyproject.toml`), the same version that `custom_components/veoliaidf/manifest.json` requires. To test against a local checkout of the library instead, add `[tool.uv.sources]` with `pyveoliaidf = { path = "../pyveoliaidf", editable = true }` and run `uv lock`, but do not commit it. When a new version of the library is released, change the pin in both files and run `uv lock`.
 
 `uv run pytest` runs the offline tests: no network and no browser.
 
