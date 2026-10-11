@@ -127,3 +127,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# A local Home Assistant configuration for trying the integration (see the README)
+/config/

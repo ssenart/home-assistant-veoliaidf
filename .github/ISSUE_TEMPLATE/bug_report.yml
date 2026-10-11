@@ -1,0 +1,90 @@
+name: Bug report
+description: The integration does not work as expected
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting. The more precise you are, the faster it gets fixed.
+
+        **Never paste your password, tokens, cookies, contract or meter numbers, names, addresses, mail or phone.** Replace them with `XXX`. The debug log of the integration shows your login: replace it too. See "Reporting an issue" in the README.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+      description: One or two sentences. Did it ever work? If so, since when did it stop?
+    validations:
+      required: true
+  - type: input
+    id: ha_version
+    attributes:
+      label: Home Assistant version and installation type
+      description: For example "2026.9.4, Home Assistant OS", "Container", "Core", "Supervised".
+    validations:
+      required: true
+  - type: input
+    id: component_version
+    attributes:
+      label: Version of the integration
+      description: "How you installed it (HACS or manual) and its version (custom_components/veoliaidf/manifest.json). The library version is shown in the log when it is installed, or by `pip show pyveoliaidf`."
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Your configuration, without the password and the login
+      render: yaml
+      placeholder: |
+        sensor:
+          - platform: veoliaidf
+            username: XXX
+            password: XXX
+            scan_interval: 08:00:00
+  - type: textarea
+    id: error
+    attributes:
+      label: The error from Settings, System, Logs
+      description: The complete message and traceback.
+      render: text
+  - type: textarea
+    id: log
+    attributes:
+      label: Debug log
+      description: |
+        Add this to configuration.yaml, restart, wait for the next update, and paste the lines that mention veoliaidf. Replace your login with XXX.
+
+        ```yaml
+        logger:
+          default: warning
+          logs:
+            custom_components.veoliaidf: debug
+            pyveoliaidf: debug
+        ```
+      render: text
+  - type: dropdown
+    id: website
+    attributes:
+      label: Does the Veolia website itself work in your browser?
+      options:
+        - "Yes, I can log in and see my consumption"
+        - "No, the website has a problem too"
+        - "I did not check"
+    validations:
+      required: true
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: How often does it happen?
+      options:
+        - Always
+        - Sometimes
+        - Once
+  - type: input
+    id: account
+    attributes:
+      label: Account shape
+      description: "Only the shape, never the numbers: for example \"1 contract, 1 meter\"."
+  - type: textarea
+    id: more
+    attributes:
+      label: Anything else
