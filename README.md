@@ -207,7 +207,6 @@ First look at the log: **Settings, System, Logs**, and search for `veoliaidf`. T
 | The sensors stay `unknown` | The first update runs 5 seconds after the start: wait a minute. If they stay unknown, the log has the reason: usually the login (below) or the network. |
 | `LoginError` in the log | Veolia refused the login or the password. Try them on https://connexion.leaudiledefrance.fr. A password with special characters needs quotes in `secrets.yaml`. If they work on the website, the login page may have changed: see [Reporting an issue](#reporting-an-issue). |
 | `UnexpectedResponseError` in the log | The Veolia site has changed. The message names the fields: please report it. |
-| `Detected blocking call ... inside the event loop` | A warning from the library version 0.5.0a1, fixed in the next version of the library. It does not stop the integration. |
 | The values do not change for a day | Veolia publishes the consumption of a day during the following day. The latest reading is yesterday's, and a day can be an estimate (attribute `type`) until Veolia corrects it. |
 | `sensor.veolia_yesterday_liter` looks too low or too high | Check the `type` attribute: `Estimé` means estimated. Compare with the Veolia website. |
 | Errors about `webdriver`, `firefox_binary_location`, `wait_time` or `tmpdir` | Leftovers of the old configuration: remove them. |

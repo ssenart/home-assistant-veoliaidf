@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Breaking for the installation:** the component uses the asynchronous pyveoliaidf 0.5.0, which calls the Veolia backend over HTTPS. Firefox, geckodriver and Selenium are no longer needed, and the update no longer runs in a thread: it awaits the library, with a client that is closed after each update.
 - The options `webdriver`, `firefox_binary_location`, `wait_time` and `tmpdir` are no longer used. An existing configuration that has them keeps working: Home Assistant logs an error for each one ("has been removed, please remove it") and ignores them.
 - The component builds its own rows from the typed readings of the library (liters as integers), since the library no longer returns dicts.
-- The component requires `pyveoliaidf==0.5.0a1`. The development environment installs the same pre-release from PyPI.
+- The component requires `pyveoliaidf==0.5.0a2`, which builds its TLS context off the event loop: Home Assistant no longer logs "Detected blocking call" warnings. The development environment installs the same pre-release from PyPI.
 - The development environment is managed with uv (`pyproject.toml`, `uv.lock`) and needs Python 3.14.2 or newer. The README describes the setup.
 - The total liter sensor is a water meter: device class `water`, state class `total_increasing`, unit liters. It can be selected as a water source in the Energy dashboard, and Home Assistant records its long-term statistics.
 - Offline tests run by default. The live test is marked `live` and runs with `pytest -m live`.
