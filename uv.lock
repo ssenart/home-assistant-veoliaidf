@@ -1065,7 +1065,7 @@ wheels = [
 
 [[package]]
 name = "home-assistant-veoliaidf"
-version = "0.4.2"
+version = "0.5.0a1"
 source = { virtual = "." }
 
 [package.dev-dependencies]

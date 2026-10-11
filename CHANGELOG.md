@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0a1] - 2026-10-11
+
 ### Changed
 - **Breaking for the installation:** the component uses the asynchronous pyveoliaidf 0.5.0, which calls the Veolia backend over HTTPS. Firefox, geckodriver and Selenium are no longer needed, and the update no longer runs in a thread: it awaits the library, with a client that is closed after each update.
 - The options `webdriver`, `firefox_binary_location`, `wait_time` and `tmpdir` are no longer used. An existing configuration that has them keeps working: Home Assistant logs an error for each one ("has been removed, please remove it") and ignores them.
@@ -48,3 +50,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Upgrade to PyVeoliaIDF version 0.2.0.
+
+[Unreleased]: https://github.com/ssenart/home-assistant-veoliaidf/compare/0.5.0a1...HEAD
+[0.5.0a1]: https://github.com/ssenart/home-assistant-veoliaidf/compare/0.4.2a1...0.5.0a1
