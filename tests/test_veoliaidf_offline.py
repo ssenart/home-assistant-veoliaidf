@@ -1,6 +1,10 @@
 """Offline tests: no network and no browser. The Veolia client is replaced by a fake."""
 import asyncio
+from datetime import date, datetime, time
+from decimal import Decimal
 from unittest import mock
+
+from pyveoliaidf import ConsumptionHistory, Reading, Step
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import UnitOfVolume
@@ -14,6 +18,7 @@ from custom_components.veoliaidf.sensor import (
     HA_TOTAL_LITER,
     LAST_N_DAYS,
     REMOVED_OPTIONS,
+    to_rows,
 )
 
 USERNAME = "user@example.com"
@@ -32,10 +37,40 @@ LEGACY_OPTIONS = {
     "tmpdir": "/tmp",
 }
 
-RECORDS = [
-    {"time": "2026-10-02 21:00:00", "total_liter": 1000, "daily_liter": 10, "type": "Mesuré", "timestamp": "2026-10-04T10:00:00"},
-    {"time": "2026-10-03 21:00:00", "total_liter": 1010, "daily_liter": 10, "type": "Mesuré", "timestamp": "2026-10-04T10:00:00"},
-]
+
+def reading(day, volume, index, estimated=False):
+    """A reading of the library: volumes and indexes are Decimal cubic meters."""
+
+    return Reading(
+        day=day,
+        time=datetime.combine(day, time(21)),
+        volume_m3=Decimal(volume),
+        index_m3=Decimal(index),
+        estimated=estimated,
+    )
+
+
+def history(*readings):
+    return ConsumptionHistory(
+        contract_number="C",
+        meter_number="X1",
+        point_id="1",
+        step=Step.DAY,
+        start=date(2026, 10, 1),
+        end=date(2026, 10, 4),
+        period_start=None,
+        period_end=None,
+        readings=list(readings),
+        meter_readings=[],
+        average_price_eur_m3=None,
+        permanent_flow_threshold=None,
+        shows_permanent_flow=False,
+        can_compare_month=False,
+        retrieved_at=datetime(2026, 10, 4, 10, 0),
+    )
+
+
+HISTORY = history(reading(date(2026, 10, 2), "0.010", "1.000"), reading(date(2026, 10, 3), "0.010", "1.010", estimated=True))
 
 
 class FakeClient:
@@ -43,7 +78,7 @@ class FakeClient:
 
     last_args = None
     last_kwargs = None
-    updates = 0
+    last_history_kwargs = None
     closed = 0
 
     def __init__(self, *args, **kwargs):
@@ -56,15 +91,13 @@ class FakeClient:
     async def __aexit__(self, exc_type, exc_value, traceback):
         FakeClient.closed += 1
 
-    async def update(self):
-        FakeClient.updates += 1
-
-    def data(self):
-        return list(RECORDS)
+    async def history(self, **kwargs):
+        FakeClient.last_history_kwargs = kwargs
+        return HISTORY
 
 
 class FailingClient(FakeClient):
-    async def update(self):
+    async def history(self, **kwargs):
         raise RuntimeError("the site is down")
 
 
@@ -85,8 +118,9 @@ def test_the_client_is_built_with_the_credentials_and_the_window_only():
 
     assert len(entities) == 4
     # No browser option, and no session: the library makes its own, which trusts the Veolia certificate chain.
-    assert FakeClient.last_args == (USERNAME, "secret", LAST_N_DAYS)
+    assert FakeClient.last_args == (USERNAME, "secret")
     assert FakeClient.last_kwargs == {}
+    assert FakeClient.last_history_kwargs == {"last_n_days": LAST_N_DAYS}
 
 
 def test_the_client_is_used_as_a_context_manager_so_its_session_is_closed():
@@ -129,7 +163,7 @@ def test_sensors_expose_timestamp_and_type_without_username():
     assert total.state == 1010
     attributes = total.extra_state_attributes
     assert attributes[HA_TIMESTAMP] == "2026-10-04T10:00:00"
-    assert attributes[HA_TYPE] == "Mesuré"
+    assert attributes[HA_TYPE] == "Estimé"
     assert CONF_USERNAME not in attributes
     assert USERNAME not in str(attributes)
 
@@ -165,3 +199,22 @@ def test_other_sensors_are_not_water_meters():
     for entity in others:
         assert getattr(entity, "state_class", None) is None
         assert getattr(entity, "device_class", None) is None
+
+
+def test_rows_convert_the_readings_of_the_library():
+    rows = to_rows(HISTORY)
+
+    assert rows == [
+        {"time": "2026-10-02 21:00:00", "total_liter": 1000, "daily_liter": 10, "type": "Mesuré", "timestamp": "2026-10-04T10:00:00"},
+        {"time": "2026-10-03 21:00:00", "total_liter": 1010, "daily_liter": 10, "type": "Estimé", "timestamp": "2026-10-04T10:00:00"},
+    ]
+
+
+def test_rows_keep_the_liter_precision_of_the_site():
+    rows = to_rows(history(reading(date(2026, 10, 2), "0.374", "144.242")))
+
+    assert (rows[0]["total_liter"], rows[0]["daily_liter"]) == (144242, 374)
+
+
+def test_no_readings_give_no_rows():
+    assert to_rows(history()) == []

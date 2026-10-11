@@ -29,6 +29,44 @@ The options `webdriver`, `firefox_binary_location`, `wait_time` and `tmpdir` of 
 
 4. Optional: to follow your water consumption in the Energy dashboard, go to Settings → Dashboards → Energy, add a water source and select `sensor.veolia_total_liter`. Home Assistant records long-term statistics from the moment it starts reading this sensor; past readings are not imported.
 
+# Reporting an issue
+Something does not work? Please open an issue at https://github.com/ssenart/home-assistant-veoliaidf/issues. If the cause is in the Veolia data itself (a login error, a missing reading, an `UnexpectedResponseError`), it will be moved to the [PyVeoliaIDF library](https://github.com/ssenart/PyVeoliaIDF#reporting-an-issue), which explains in detail how to report.
+
+## First, check these
+1. **Does the website work?** Log in at https://connexion.leaudiledefrance.fr and open your consumption history. If it fails there too, it is not the component.
+2. **Are you up to date?** Update the component (HACS or a new copy of `custom_components/veoliaidf`) and restart Home Assistant. The site changes, and the fix may be released already: see the [changelog](CHANGELOG.md).
+3. **Did you migrate?** The options `webdriver`, `firefox_binary_location`, `wait_time` and `tmpdir` are no longer used. Home Assistant warns about them and ignores them: you can remove them.
+
+## What to include
+* What happened and what you expected; since when it stopped working, if it worked.
+* The **Home Assistant version** and how it is installed (OS, Container, Core, Supervised), and the **component version** (`manifest.json`) with the **PyVeoliaIDF version** (Settings, System, Logs show it when the component loads, or `pip show pyveoliaidf` in the Home Assistant environment).
+* Your configuration **without the password and the login**:
+
+  ```yaml
+  sensor:
+    - platform: veoliaidf
+      username: XXX
+      password: XXX
+      scan_interval: 08:00:00
+  ```
+* The **complete error** from Settings, System, Logs, with its traceback.
+* The **debug log**. Add this to `configuration.yaml`, restart, wait for the next update (or restart again), and copy the lines that mention `veoliaidf`:
+
+  ```yaml
+  logger:
+    default: warning
+    logs:
+      custom_components.veoliaidf: debug
+      pyveoliaidf: debug
+  ```
+
+  The debug log of the library shows each call (method, path, status, duration) and each retry, and never your password, tokens or the answers of the site. The component itself logs, at the debug level, **your login** (`username=...`), the masked password, and the readings it received (your consumption). Replace your login with `XXX` before you post.
+* The **shape** of your account, for instance "1 contract, 1 meter".
+* Whether it happens **always, sometimes or once**, and the time of the last failure.
+
+## Check what you share
+Replace with `XXX` before you post: your password, your login (mail), contract and meter numbers, names, addresses, phone numbers, and any long random identifier. Never post tokens, cookies or `sid` values. The versions, the error messages, the status codes and your consumption values are safe to share.
+
 # Development
 
 The development environment is managed with [uv](https://docs.astral.sh/uv/), from `pyproject.toml` and `uv.lock`. It needs Python 3.14.2 or newer, the version Home Assistant requires.

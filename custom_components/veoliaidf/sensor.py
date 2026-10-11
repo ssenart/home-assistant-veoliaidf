@@ -3,8 +3,7 @@ from datetime import timedelta, datetime
 import logging
 import traceback
 
-from pyveoliaidf.client import Client
-from pyveoliaidf.enum import PropertyNameEnum
+from pyveoliaidf import Client, ConsumptionHistory
 
 # Home Assistant must be imported before voluptuous: its import swaps in its own voluptuous (probatio).
 import homeassistant.helpers.config_validation as cv
@@ -24,9 +23,17 @@ ICON_WATER = "mdi:water"
 LAST_N_DAYS = 10
 INITIAL_UPDATE_DELAY = 5  # seconds before the first update, once Home Assistant has started
 
-HA_TIME = "time"
+# The keys of a row: one reading of the library, as the sensors read it.
+ROW_TIME = "time"
+ROW_TOTAL_LITER = "total_liter"
+ROW_DAILY_LITER = "daily_liter"
+ROW_TYPE = "type"
+ROW_TIMESTAMP = "timestamp"
+
 HA_TIMESTAMP = "timestamp"
 HA_TYPE = "type"
+MEASURED = "Mesuré"
+ESTIMATED = "Estimé"
 HA_ATTRIBUTION = "Data provided by VeoliaIDF"
 
 VEOLIA_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -38,6 +45,25 @@ HA_TOTAL_LITER = "Veolia total liter"
 
 LAST_INDEX = -1
 BEFORE_LAST_INDEX = -2
+
+
+# --------------------------------------------------------------------------------------------
+def to_rows(history: ConsumptionHistory) -> list[dict]:
+    """Convert the readings of the library to the rows that the sensors read: liters as integers, the time as text."""
+
+    timestamp = history.retrieved_at.isoformat()
+
+    return [
+        {
+            ROW_TIME: reading.time.strftime(VEOLIA_DATETIME_FORMAT),
+            ROW_TOTAL_LITER: int(round(reading.index_liters)),
+            ROW_DAILY_LITER: int(round(reading.liters)),
+            ROW_TYPE: ESTIMATED if reading.estimated else MEASURED,
+            ROW_TIMESTAMP: timestamp,
+        }
+        for reading in history.readings
+    ]
+
 
 PLATFORM_SCHEMA = vol.All(
     *(cv.removed(option, raise_if_present=False) for option in REMOVED_OPTIONS),
@@ -94,13 +120,13 @@ class VeoliaIDFAccount:
         self.sensors = []
 
         self.sensors.append(
-            VeoliaIDFSensor(HA_PERIOD_START_TIME, PropertyNameEnum.TIME.value, None, BEFORE_LAST_INDEX, self))
+            VeoliaIDFSensor(HA_PERIOD_START_TIME, ROW_TIME, None, BEFORE_LAST_INDEX, self))
         self.sensors.append(
-            VeoliaIDFSensor(HA_PERIOD_END_TIME, PropertyNameEnum.TIME.value, None, LAST_INDEX, self))
+            VeoliaIDFSensor(HA_PERIOD_END_TIME, ROW_TIME, None, LAST_INDEX, self))
         self.sensors.append(
-            VeoliaIDFSensor(HA_YESTERDAY_LITER, PropertyNameEnum.DAILY_LITER.value, UnitOfVolume.LITERS, LAST_INDEX, self))
+            VeoliaIDFSensor(HA_YESTERDAY_LITER, ROW_DAILY_LITER, UnitOfVolume.LITERS, LAST_INDEX, self))
         self.sensors.append(
-            VeoliaIDFWaterSensor(HA_TOTAL_LITER, PropertyNameEnum.TOTAL_LITER.value, LAST_INDEX, self))
+            VeoliaIDFWaterSensor(HA_TOTAL_LITER, ROW_TOTAL_LITER, LAST_INDEX, self))
 
     # ----------------------------------
     async def async_update_veolia_data(self, event_time):
@@ -111,9 +137,8 @@ class VeoliaIDFAccount:
         try:
             # The client makes its own HTTP session: it must keep the login cookies and trust the intermediate
             # certificate of the Veolia site, which Home Assistant's shared session does not.
-            async with Client(self._username, self.__password, LAST_N_DAYS) as client:
-                await client.update()
-                self._data = client.data()
+            async with Client(self._username, self.__password) as client:
+                self._data = to_rows(await client.history(last_n_days=LAST_N_DAYS))
             _LOGGER.debug("data=%s", self._data)
 
             _LOGGER.debug("New data have been retrieved successfully from PyVeoliaIDF library")
@@ -183,13 +208,13 @@ class VeoliaIDFReadingMixin:
             if self._account.data is not None:
                 data = self._account.data[self._index]
                 if numeric:
-                    # data is a measure in liters (an integer, but kept tolerant of text)
+                    # data is a measure in liters
                     self._measure = int(data[self._identifier])
                 else:
                     # data is a date in VEOLIA_DATETIME_FORMAT
                     self._measure = datetime.strptime(data[self._identifier], VEOLIA_DATETIME_FORMAT)
-                self._timestamp = data[PropertyNameEnum.TIMESTAMP.value]
-                self._type = data[PropertyNameEnum.TYPE.value]
+                self._timestamp = data[ROW_TIMESTAMP]
+                self._type = data[ROW_TYPE]
                 _LOGGER.debug("HA data have been updated successfully")
             else:
                 _LOGGER.debug("No data available yet for update")
