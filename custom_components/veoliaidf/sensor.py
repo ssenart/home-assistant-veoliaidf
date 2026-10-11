@@ -132,7 +132,7 @@ class VeoliaIDFAccount:
     async def async_update_veolia_data(self, event_time):
         """Fetch new state data for the sensor."""
 
-        _LOGGER.debug("Querying PyVeoliaIDF library for new data...")
+        _LOGGER.debug("Querying pyveoliaidf library for new data...")
 
         try:
             # The client makes its own HTTP session: it must keep the login cookies and trust the intermediate
@@ -141,9 +141,9 @@ class VeoliaIDFAccount:
                 self._data = to_rows(await client.history(last_n_days=LAST_N_DAYS))
             _LOGGER.debug("data=%s", self._data)
 
-            _LOGGER.debug("New data have been retrieved successfully from PyVeoliaIDF library")
+            _LOGGER.debug("New data have been retrieved successfully from pyveoliaidf library")
         except Exception:
-            _LOGGER.error("Failed to query PyVeoliaIDF library with exception : %s", traceback.format_exc())
+            _LOGGER.error("Failed to query pyveoliaidf library with exception : %s", traceback.format_exc())
             if event_time is None:
                 raise
 

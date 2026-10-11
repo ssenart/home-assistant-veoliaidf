@@ -2,8 +2,8 @@
 
 Veoliaidf permits to integrate in Home Assistant all your water consumption data.
 
-This custom component is using PyVeoliaIDF library to retrieve Veolia data.
-PyVeoliaIDF reads the data over HTTPS from the Veolia customer area: it needs no browser and no web driver (see https://github.com/ssenart/PyVeoliaIDF for details).
+This custom component is using pyveoliaidf library to retrieve Veolia data.
+pyveoliaidf reads the data over HTTPS from the Veolia customer area: it needs no browser and no web driver (see https://github.com/ssenart/pyveoliaidf for details).
 
 1. Copy the veoliaidf directory in HA config/custom_components directory.
 
@@ -30,7 +30,7 @@ The options `webdriver`, `firefox_binary_location`, `wait_time` and `tmpdir` of 
 4. Optional: to follow your water consumption in the Energy dashboard, go to Settings → Dashboards → Energy, add a water source and select `sensor.veolia_total_liter`. Home Assistant records long-term statistics from the moment it starts reading this sensor; past readings are not imported.
 
 # Reporting an issue
-Something does not work? Please open an issue at https://github.com/ssenart/home-assistant-veoliaidf/issues. If the cause is in the Veolia data itself (a login error, a missing reading, an `UnexpectedResponseError`), it will be moved to the [PyVeoliaIDF library](https://github.com/ssenart/PyVeoliaIDF#reporting-an-issue), which explains in detail how to report.
+Something does not work? Please open an issue at https://github.com/ssenart/home-assistant-veoliaidf/issues. If the cause is in the Veolia data itself (a login error, a missing reading, an `UnexpectedResponseError`), it will be moved to the [pyveoliaidf library](https://github.com/ssenart/pyveoliaidf#reporting-an-issue), which explains in detail how to report.
 
 ## First, check these
 1. **Does the website work?** Log in at https://connexion.leaudiledefrance.fr and open your consumption history. If it fails there too, it is not the component.
@@ -39,7 +39,7 @@ Something does not work? Please open an issue at https://github.com/ssenart/home
 
 ## What to include
 * What happened and what you expected; since when it stopped working, if it worked.
-* The **Home Assistant version** and how it is installed (OS, Container, Core, Supervised), and the **component version** (`manifest.json`) with the **PyVeoliaIDF version** (Settings, System, Logs show it when the component loads, or `pip show pyveoliaidf` in the Home Assistant environment).
+* The **Home Assistant version** and how it is installed (OS, Container, Core, Supervised), and the **component version** (`manifest.json`) with the **pyveoliaidf version** (Settings, System, Logs show it when the component loads, or `pip show pyveoliaidf` in the Home Assistant environment).
 * Your configuration **without the password and the login**:
 
   ```yaml
@@ -77,7 +77,7 @@ uv sync                                  # create .venv and install the locked d
 uv run flake8 custom_components tests    # lint
 ```
 
-The development environment installs PyVeoliaIDF from the sibling checkout `../PyVeoliaIDF` (see `tool.uv.sources` in `pyproject.toml`), because the asynchronous version is not on PyPI yet. Once it is released, pin it there (for instance `pyveoliaidf>=0.5.0`), remove the source and run `uv lock`. `custom_components/veoliaidf/manifest.json` already requires `pyveoliaidf==0.5.0a1`: set it to the version that is actually published.
+The development environment installs pyveoliaidf from the sibling checkout `../pyveoliaidf` (see `tool.uv.sources` in `pyproject.toml`), because the asynchronous version is not on PyPI yet. Once it is released, pin it there (for instance `pyveoliaidf>=0.5.0`), remove the source and run `uv lock`. `custom_components/veoliaidf/manifest.json` already requires `pyveoliaidf==0.5.0a1`: set it to the version that is actually published.
 
 `uv run pytest` runs the offline tests: no network and no browser.
 

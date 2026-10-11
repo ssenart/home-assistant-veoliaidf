@@ -19,7 +19,7 @@ dev = [
 ]
 
 [tool.uv.sources]
-pyveoliaidf = { path = "../PyVeoliaIDF", editable = true }
+pyveoliaidf = { path = "../pyveoliaidf", editable = true }
 
 [tool.uv]
 # This is a Home Assistant custom component, not a package to publish.
