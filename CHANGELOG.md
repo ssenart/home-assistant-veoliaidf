@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0a2] - 2026-11-25
+
 ### Fixed
 - The component requires `pyveoliaidf==0.5.0a3`. With the previous version, every update failed with `CERTIFICATE_VERIFY_FAILED` since the Veolia site renewed its certificate, and each failure left an HTTP session open.
 
@@ -54,5 +56,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Upgrade to PyVeoliaIDF version 0.2.0.
 
-[Unreleased]: https://github.com/ssenart/home-assistant-veoliaidf/compare/0.5.0a1...HEAD
+[Unreleased]: https://github.com/ssenart/home-assistant-veoliaidf/compare/0.5.0a2...HEAD
+[0.5.0a2]: https://github.com/ssenart/home-assistant-veoliaidf/compare/0.5.0a1...0.5.0a2
 [0.5.0a1]: https://github.com/ssenart/home-assistant-veoliaidf/compare/0.4.2a1...0.5.0a1
