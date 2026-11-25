@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- The component requires `pyveoliaidf==0.5.0a3`. With the previous version, every update failed with `CERTIFICATE_VERIFY_FAILED` since the Veolia site renewed its certificate, and each failure left an HTTP session open.
+
 ## [0.5.0a1] - 2026-10-11
 
 ### Changed

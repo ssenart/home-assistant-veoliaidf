@@ -517,11 +517,11 @@ wheels = [
 
 [[package]]
 name = "certifi"
-version = "2026.7.22"
+version = "2026.11.20"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/a3/c2/24167ea9858356b47a87a50d39908bfdb72ceeefe0041586e704e5376b3a/certifi-2026.7.22.tar.gz", hash = "sha256:741e2c3b351ddf169a738da9f2c048608ff7f2c5cc02f1ebc6b118bb090d5d55", size = 138112, upload-time = "2026-07-22T03:35:12.644Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/51/33/4cd27639502f010084bcef7a2036391dd637439901341ce1a530f36f6e51/certifi-2026.11.20.tar.gz", hash = "sha256:af1cb240a8133f105aa52684a3a3258339d7f2fd0bd4e2812698ff5cf5588c4e", size = 128901, upload-time = "2026-11-20T23:37:49.522Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0b/a7/71ac2cff56fec219ed242bb11b8efb69fcc4bec75db06fb7bfe35de520e6/certifi-2026.7.22-py3-none-any.whl", hash = "sha256:62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775", size = 136983, upload-time = "2026-07-22T03:35:11.276Z" },
+    { url = "https://files.pythonhosted.org/packages/6d/39/5eec3296860b94ac20bb8ed807725b88f6adfab3f343df592afd975f5f86/certifi-2026.11.20-py3-none-any.whl", hash = "sha256:7422df25243767b9877031a2248cb14d09ddac9beee846f4cef3d5c9191d488f", size = 127913, upload-time = "2026-11-20T23:37:48.117Z" },
 ]
 
 [[package]]
@@ -1085,7 +1085,7 @@ dev = [
     { name = "homeassistant" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
-    { name = "pyveoliaidf", specifier = "==0.5.0a2" },
+    { name = "pyveoliaidf", specifier = "==0.5.0a3" },
 ]
 
 [[package]]
@@ -2019,16 +2019,16 @@ wheels = [
 
 [[package]]
 name = "pyveoliaidf"
-version = "0.5.0a2"
+version = "0.5.0a3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
     { name = "certifi" },
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b3/6c/91b13b7982b8cbd2b6a09b155412589611cd6ece95ef2688a0363a5ac989/pyveoliaidf-0.5.0a2.tar.gz", hash = "sha256:aea60be37b03e6c5d978015a510ed11e7a5e799269ea3befda0d8017706b6ff1", size = 237165, upload-time = "2026-10-11T13:15:44.666Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/56/39/0559b10a45e9bbd0c55261b50346fc50a753f6a3a3aff0540e773153f55d/pyveoliaidf-0.5.0a3.tar.gz", hash = "sha256:a71a44a94a0683528ed5ae08c98f2fa0dbf90fc7f52f7b9b7952e636e4eb2d1e", size = 239617, upload-time = "2026-11-25T23:41:00.583Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4c/a1/efea157be876950511aa0f5b914ce564840c23a8f919694f4b6b0226bef2/pyveoliaidf-0.5.0a2-py3-none-any.whl", hash = "sha256:df2bbb1ed864b59834218f716172d7fe3853c1a0e11049fc2595c06c11e6bee3", size = 41418, upload-time = "2026-10-11T13:15:43.077Z" },
+    { url = "https://files.pythonhosted.org/packages/97/21/c2383270c568c12b6f567616261ea81434fe57cce15b00a90eb490f09bea/pyveoliaidf-0.5.0a3-py3-none-any.whl", hash = "sha256:7cfa04cdcb6f7fc0bd3136894b354df28884d252b10fac275317fe544e150360", size = 43197, upload-time = "2026-11-25T23:40:59.191Z" },
 ]
 
 [[package]]
